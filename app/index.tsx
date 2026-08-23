@@ -106,7 +106,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={() => (
             <View style={styles.empty}>
-              <Text style={{ color: text }}>No festivals found.</Text>
+              <Text style={{ color: text }}>No festivals found</Text>
               {isOffline && (
                 <Text style={{ color: text, marginTop: 6 }}>
                   You are offline; showing cached data.

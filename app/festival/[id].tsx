@@ -61,10 +61,18 @@ export default function FestivalDetails() {
   const areas = useMemo(
     () =>
       (allAreas || [])
-        .filter((a: any) => String(a.city_id) === String(festival?.city_id))
+        .filter((a: any) => {
+          const sameCity = String(a.city_id) === String(festival?.city_id);
+          const related = (a["Related Festivals"] || "")
+            .split(";")
+            .map((id: string) => id.trim());
+          const matchesFestival = related.includes(String(festival?.id));
+          return sameCity && matchesFestival;
+        })
         .sort((a: any, b: any) => Number(a.id) - Number(b.id)),
-    [allAreas, festival?.city_id]
+    [allAreas, festival?.city_id, festival?.id]
   );
+
   // carousel auto scroll
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
@@ -194,9 +202,9 @@ export default function FestivalDetails() {
         </View>
 
         {/* areas */}
-        <Text style={[styles.sectionHeading, { color: text }]}>
+        {/*<Text style={[styles.sectionHeading, { color: text }]}>
           Areas in {festival.city_name}
-        </Text>
+        </Text>*/}
         <View style={styles.grid}>
           {areas.map((a: any) => (
             <Pressable
