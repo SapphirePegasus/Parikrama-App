@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Parikrama",
+    "slug": "parikrama",
+    "version": "2.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/logo.png",
+    "scheme": "parikramaapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.sapphirepegasus.parikrama"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/logo.png"
+    },
+    "plugins": [
+      "expo-router",
+      "@react-native-vector-icons/ionicons",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https: //sentry.io/",
+          "organization": "sapphirepegasus",
+          "project": "parikrama-app"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#232323",
+          "image": "./assets/images/logo.png",
+          "dark": {
+            "image": "./assets/images/logo.png",
+            "backgroundColor": "#000000"
+          },
+          "imageWidth": 200
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f222f080-62c9-4650-9c72-17445c9ee517"
+      }
+    }
+  }
+}
