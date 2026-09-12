@@ -2,7 +2,7 @@
   "expo": {
     "name": "Parikrama",
     "slug": "parikrama",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "parikramaapp",
@@ -13,6 +13,7 @@
     },
     "android": {
       "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
       "package": "com.sapphirepegasus.parikrama"
     },
     "web": {
@@ -22,6 +23,15 @@
     },
     "plugins": [
       "expo-router",
+      "@react-native-vector-icons/ionicons",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https: //sentry.io/",
+          "organization": "sapphirepegasus",
+          "project": "parikrama-app"
+        }
+      ],
       [
         "expo-splash-screen",
         {

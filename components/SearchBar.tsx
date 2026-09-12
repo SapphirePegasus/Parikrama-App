@@ -1,20 +1,17 @@
-// components/SearchBar.tsx
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import React from "react";
 import { StyleSheet, TextInput, View } from "react-native";
 
 type Props = {
   value: string;
   onChangeText: (v: string) => void;
-  onPressFilter?: () => void;
   placeholder?: string;
 };
 
 export default function SearchBar({
   value,
   onChangeText,
-  onPressFilter,
   placeholder = "Search",
 }: Props) {
   const bg = useThemeColor({}, "background");
@@ -34,9 +31,6 @@ export default function SearchBar({
           returnKeyType="search"
         />
       </View>
-      {/*<Pressable style={[styles.filterBtn]} onPress={onPressFilter}>
-        <Ionicons name="options" size={20} color={accent} />
-      </Pressable>*/}
     </View>
   );
 }
@@ -58,5 +52,4 @@ const styles = StyleSheet.create({
     borderWidth: 0.4,
   },
   input: { marginLeft: 8, fontSize: 16, flex: 1, padding: 0 },
-  filterBtn: { marginLeft: 10, padding: 10, borderRadius: 8 },
 });

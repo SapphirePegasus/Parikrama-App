@@ -1,4 +1,3 @@
-// app/festival/[id].tsx
 import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -18,7 +17,6 @@ import {
   View,
 } from "react-native";
 
-// enable LayoutAnimation on Android
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental
@@ -28,52 +26,63 @@ if (
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-export default function FestivalDetails() {
-  const { id, cityId } = useLocalSearchParams<{
-    id: string;
-    cityId?: string;
-  }>();
+type FestivalDetail = {
+  id: number | string;
+  name: string;
+  subtitle?: string;
+  description?: string;
+  when_to_go?: string;
+  tips?: string;
+  what_to_wear?: string;
+  images?: string;
+  city_id: number;
+};
 
+type Area = {
+  id: number;
+  area: string;
+  city_id: number;
+  "Related Festivals"?: string;
+};
+
+export default function FestivalDetails() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+
   const bg = useThemeColor({}, "background");
   const text = useThemeColor({}, "text");
   const btnCol = useThemeColor({}, "tint");
   const btnTxt = useThemeColor({}, "tintText");
 
-  const { data: festivals, loading } = useCachedQuery<any>(
+  const { data: festivals, loading } = useCachedQuery<FestivalDetail>(
     "festivals_cache",
     "ParikramaFestivals",
     "id,name,subtitle,description,when_to_go,tips,what_to_wear,images,city_id,city_name"
   );
 
   const festival = useMemo(
-    () => (festivals || []).find((f) => String(f.id) === String(id)),
+    () => festivals.find((f) => String(f.id) === String(id)),
     [festivals, id]
   );
 
-  // ✅ fetch areas for the selected city
-  const { data: allAreas = [] } = useCachedQuery<any>(
-    `areas_cache_${festival?.city_id}`,
+  const { data: allAreas = [] } = useCachedQuery<Area>(
+    `areas_cache_${festival?.city_id ?? "pending"}`,
     "ParikramaAreas"
   );
 
-  // ✅ filter & sort areas
-  const areas = useMemo(
-    () =>
-      (allAreas || [])
-        .filter((a: any) => {
-          const sameCity = String(a.city_id) === String(festival?.city_id);
-          const related = (a["Related Festivals"] || "")
-            .split(";")
-            .map((id: string) => id.trim());
-          const matchesFestival = related.includes(String(festival?.id));
-          return sameCity && matchesFestival;
-        })
-        .sort((a: any, b: any) => Number(a.id) - Number(b.id)),
-    [allAreas, festival?.city_id, festival?.id]
-  );
+  const areas = useMemo(() => {
+    if (!festival) return [];
+    return allAreas
+      .filter((a) => {
+        const sameCity = String(a.city_id) === String(festival.city_id);
+        const related = (a["Related Festivals"] ?? "")
+          .split(";")
+          .map((v) => v.trim());
+        return sameCity && related.includes(String(festival.id));
+      })
+      .sort((a, b) => Number(a.id) - Number(b.id));
+  }, [allAreas, festival]);
 
-  // carousel auto scroll
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const images = festival?.images ? festival.images.split(";") : [];
@@ -83,10 +92,7 @@ export default function FestivalDetails() {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => {
         const nextIndex = (prev + 1) % images.length;
-        flatListRef.current?.scrollToIndex({
-          index: nextIndex,
-          animated: true,
-        });
+        flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
         return nextIndex;
       });
     }, 5000);
@@ -98,7 +104,6 @@ export default function FestivalDetails() {
     setCurrentIndex(index);
   };
 
-  // expand/collapse block
   const [expanded, setExpanded] = useState(false);
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -116,7 +121,6 @@ export default function FestivalDetails() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: bg }]}>
-      {/* carousel */}
       <View>
         <FlatList
           ref={flatListRef}
@@ -131,9 +135,8 @@ export default function FestivalDetails() {
           onScroll={onScroll}
           scrollEventThrottle={16}
         />
-        {/* dots */}
         <View style={styles.dotsContainer}>
-          {images.map((_: string, idx: number) => (
+          {images.map((_, idx) => (
             <View
               key={idx}
               style={[styles.dot, idx === currentIndex && styles.activeDot]}
@@ -151,14 +154,12 @@ export default function FestivalDetails() {
         ) : null}
         {festival.when_to_go ? (
           <View style={styles.metaLine}>
-            {/*<Ionicons name="calendar-outline" size={16} color={text} />*/}
             <Text style={[styles.when, { color: text }]}>
               🗓️ {festival.when_to_go}
             </Text>
           </View>
         ) : null}
 
-        {/* expandable block */}
         <View style={styles.expandable}>
           {expanded ? (
             <>
@@ -168,20 +169,14 @@ export default function FestivalDetails() {
                 </Text>
               ) : null}
               {festival.tips ? (
-                <View style={styles.metaLine}>
-                  <Text style={[styles.desc, { color: text }]}>
-                    <Text>💡 Tips: </Text>
-                    {festival.tips}
-                  </Text>
-                </View>
+                <Text style={[styles.desc, { color: text }]}>
+                  💡 Tips: {festival.tips}
+                </Text>
               ) : null}
               {festival.what_to_wear ? (
-                <View style={styles.metaLine}>
-                  <Text style={[styles.desc, { color: text }]}>
-                    <Text>👕 What to Wear: </Text>
-                    {festival.what_to_wear}
-                  </Text>
-                </View>
+                <Text style={[styles.desc, { color: text }]}>
+                  👕 What to Wear: {festival.what_to_wear}
+                </Text>
               ) : null}
             </>
           ) : (
@@ -201,12 +196,8 @@ export default function FestivalDetails() {
           </Pressable>
         </View>
 
-        {/* areas */}
-        {/*<Text style={[styles.sectionHeading, { color: text }]}>
-          Areas in {festival.city_name}
-        </Text>*/}
         <View style={styles.grid}>
-          {areas.map((a: any) => (
+          {areas.map((a) => (
             <Pressable
               key={a.id}
               style={[styles.areaCard, { backgroundColor: btnCol }]}
@@ -215,8 +206,8 @@ export default function FestivalDetails() {
                   pathname: "/celebrations/[id]",
                   params: {
                     id: String(a.id),
-                    cityId: festival.city_id,
-                    festivalId: festival.id,
+                    cityId: String(festival.city_id),
+                    festivalId: String(festival.id),
                   },
                 })
               }
@@ -233,11 +224,7 @@ export default function FestivalDetails() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   loader: { flex: 1, alignItems: "center", justifyContent: "center" },
-  carouselImage: {
-    width: SCREEN_WIDTH,
-    height: 280,
-    resizeMode: "cover",
-  },
+  carouselImage: { width: SCREEN_WIDTH, height: 280, resizeMode: "cover" },
   dotsContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -250,9 +237,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(146, 146, 146, 0.5)",
     marginHorizontal: 4,
   },
-  activeDot: {
-    backgroundColor: "#007AFF",
-  },
+  activeDot: { backgroundColor: "#007AFF" },
   content: { padding: 16 },
   name: { fontSize: 22, fontWeight: "700" },
   subtitle: { fontSize: 16, marginTop: 4 },
@@ -261,7 +246,6 @@ const styles = StyleSheet.create({
   expandable: { marginTop: 12 },
   desc: { fontSize: 14, lineHeight: 20, marginBottom: 6 },
   showMoreBtn: { marginTop: 4 },
-  sectionHeading: { fontSize: 18, fontWeight: "700", marginTop: 20 },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",

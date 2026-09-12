@@ -1,6 +1,5 @@
-// components/MenuItem.tsx
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -17,14 +16,12 @@ export default function MenuItem({
   subtitle,
   onPress,
 }: Props) {
-  const bg = useThemeColor({}, "background");
   const text = useThemeColor({}, "text");
-  const accent = useThemeColor({}, "tint");
 
   return (
-    <Pressable style={[styles.row]} onPress={onPress}>
+    <Pressable style={styles.row} onPress={onPress}>
       <View style={styles.left}>
-        <Ionicons name={icon as any} size={22} color={text} />
+        <Ionicons name={icon} size={22} color={text} />
         <View style={{ marginLeft: 12 }}>
           <Text style={[styles.title, { color: text }]}>{title}</Text>
           {subtitle ? (

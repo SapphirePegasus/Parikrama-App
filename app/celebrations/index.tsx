@@ -1,5 +1,4 @@
-// app/celebration/index.tsx
-import Header from "@/components/HomeHeader";
+import HomeHeader from "@/components/HomeHeader";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -9,7 +8,7 @@ export default function CelebrationsIndex() {
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
-      <Header />
+      <HomeHeader />
       <View style={styles.content}>
         <Text style={[styles.text, { color: text }]}>
           Select a celebration to view details.

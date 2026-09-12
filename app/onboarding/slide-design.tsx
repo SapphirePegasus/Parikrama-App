@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Animated, Image, StyleSheet, Text } from "react-native";
 
 interface SlideProps {
@@ -16,8 +16,8 @@ export default function SlideDesign({
   active,
   textColor,
 }: SlideProps) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(0));
+  const [scaleAnim] = useState(() => new Animated.Value(0.95));
 
   useEffect(() => {
     Animated.parallel([
@@ -61,15 +61,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     resizeMode: "cover",
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  text: {
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 20,
-  },
+  title: { fontSize: 22, fontWeight: "700", marginBottom: 12, textAlign: "center" },
+  text: { fontSize: 15, textAlign: "center", lineHeight: 20 },
 });

@@ -1,45 +1,53 @@
-// components/Header.tsx
 import { useSelectedCity } from "@/context/SelectedCityContext";
 import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, useColorScheme, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import CitySelectorModal from "./CitySelectorModal";
 
-export default function Header() {
-  const router = useRouter();
-  const { data: cities = [], loading } = useCachedQuery<{
-    id: number;
-    city: string;
-    state?: string;
-    country?: string;
-  }>("cities_cache", "ParikramaLocations", "id, city, state, country");
+type City = {
+  id: number;
+  city: string;
+  state?: string;
+  country?: string;
+};
 
-  const scheme = useColorScheme() ?? "light";
+export default function HomeHeader() {
+  const router = useRouter();
+  const { data: cities = [], loading } = useCachedQuery<City>(
+    "cities_cache",
+    "ParikramaLocations",
+    "id, city, state, country"
+  );
+
   const bg = useThemeColor({}, "background");
   const text = useThemeColor({}, "text");
 
   const { selectedCity, setSelectedCity } = useSelectedCity();
   const [modalVisible, setModalVisible] = useState(false);
 
-  // If we have cities and no selected city set yet, set default to first city
+  // Default to the first city once cities have loaded, but only if the
+  // user hasn't already picked one (including on a previous session, via
+  // the persisted SelectedCityContext).
+  const hasDefaultedRef = React.useRef(false);
   useEffect(() => {
-    if (!loading && cities.length && !selectedCity) {
+    if (loading || hasDefaultedRef.current || selectedCity) return;
+    if (cities.length > 0) {
+      hasDefaultedRef.current = true;
       setSelectedCity(cities[0].city);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, cities]);
+  }, [loading, cities, selectedCity, setSelectedCity]);
 
-  const displayCity =
-    selectedCity ?? (cities.length ? cities[0].city : "Kolkata");
+  const displayCity = selectedCity ?? (cities.length ? cities[0].city : "—");
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
       <Pressable
         style={styles.left}
         onPress={() => setModalVisible(true)}
+        accessibilityRole="button"
         accessibilityLabel="Open city selector"
       >
         <Ionicons name="location-outline" size={24} color={text} />
@@ -51,27 +59,18 @@ export default function Header() {
       <Pressable
         style={styles.right}
         onPress={() => router.push("/menu")}
-        accessibilityLabel="Open Menu"
+        accessibilityRole="button"
+        accessibilityLabel="Open menu"
       >
         <Ionicons name="menu" size={28} color={text} />
       </Pressable>
-
-      {/*<Pressable
-        style={styles.right}
-        onPress={() => router.push("/profile")}
-        accessibilityLabel="Open profile"
-      >
-        <Ionicons name="person-circle-outline" size={32} color={text} />
-      </Pressable> */}
 
       <CitySelectorModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         cities={cities}
         selectedCity={displayCity}
-        onSelect={(city) => {
-          setSelectedCity(city.city);
-        }}
+        onSelect={(city) => setSelectedCity(city.city)}
       />
     </View>
   );

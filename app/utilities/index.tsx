@@ -1,13 +1,12 @@
-// app/utilities.tsx
 import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { openInMaps } from "@/lib/maps";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Dimensions,
   FlatList,
   Image,
-  Linking,
   Pressable,
   StyleSheet,
   Text,
@@ -15,27 +14,29 @@ import {
 } from "react-native";
 
 const { width } = Dimensions.get("window");
-const TILE_SIZE = Math.floor((width - 64) / 2); // padding & gap
+const TILE_SIZE = Math.floor((width - 64) / 2);
+
+type Utility = {
+  id: number | string;
+  name: string;
+  map_query?: string;
+  image?: string | null;
+};
 
 export default function UtilitiesScreen() {
   const bg = useThemeColor({}, "background");
   const text = useThemeColor({}, "text");
 
-  const { data: items = [], loading } = useCachedQuery<any>(
+  const { data: items = [] } = useCachedQuery<Utility>(
     "utilities_cache",
     "ParikramaUtilities",
     "id, name, map_query, image"
   );
 
-  const sortedItems = [...items].sort((a, b) => a.id - b.id);
-
-  const openMap = (query?: string, name?: string) => {
-    const q = query ?? name ?? "";
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      q
-    )}`;
-    Linking.openURL(url);
-  };
+  const sortedItems = useMemo(
+    () => [...items].sort((a, b) => Number(a.id) - Number(b.id)),
+    [items]
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
@@ -49,22 +50,23 @@ export default function UtilitiesScreen() {
         renderItem={({ item }) => (
           <Pressable
             style={[styles.tile, { width: TILE_SIZE, height: TILE_SIZE }]}
-            onPress={() => openMap(item.map_query, item.name)}
+            onPress={() => openInMaps(item.map_query ?? item.name)}
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${item.name} in Maps`}
           >
             {item.image ? (
               <Image source={{ uri: item.image }} style={styles.tileImage} />
             ) : (
               <View style={[styles.tileImage, styles.tilePlaceholder]}>
                 <Text style={{ color: "#fff", fontWeight: "700" }}>
-                  {item.name?.[0] ?? "..."}
+                  {item.name?.[0] ?? "…"}
                 </Text>
               </View>
             )}
 
-            {/* Gradient overlay */}
             <LinearGradient
               colors={["transparent", "rgba(0,0,0,0.9)"]}
-              style={styles.gradient}
+              style={[StyleSheet.absoluteFill, styles.gradient]}
             >
               <Text style={styles.tileText} numberOfLines={2}>
                 {item.name}
@@ -79,15 +81,9 @@ export default function UtilitiesScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, paddingTop: 40 },
-  label: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginLeft: 16,
-    marginBottom: 8,
-  },
+  label: { fontSize: 18, fontWeight: "700", marginLeft: 16, marginBottom: 8 },
   tile: {
     margin: 8,
-    padding: 0,
     borderRadius: 12,
     overflow: "hidden",
     alignItems: "center",
@@ -100,13 +96,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   gradient: {
-    ...StyleSheet.absoluteFillObject,
     justifyContent: "flex-end",
     padding: 8,
   },
-  tileText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#fff",
-  },
+  tileText: { fontSize: 18, fontWeight: "700", color: "#fff" },
 });

@@ -1,37 +1,16 @@
+import { useAppConfig } from "@/context/AppConfigContext";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { supabase } from "@/lib/supabase";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function AboutScreen() {
   const bg = useThemeColor({}, "background");
   const text = useThemeColor({}, "text");
+  const { config } = useAppConfig();
 
-  const [appName, setAppName] = useState("About Parikrama");
-  const [aboutText, setAboutText] = useState(
-    "Made by Prittam - www.sapphirepegasus.com"
-  );
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await supabase
-          .from("ParikramaConfig")
-          .select("config_name, config_value")
-          .in("config_name", ["aboutTitle", "aboutBody"]);
-
-        if (data && data.length) {
-          const appNameRow = data.find((d) => d.config_name === "aboutTitle");
-          const appAboutRow = data.find((d) => d.config_name === "aboutBody");
-
-          if (appNameRow) setAppName(appNameRow.config_value);
-          if (appAboutRow) setAboutText(appAboutRow.config_value);
-        }
-      } catch {
-        // ignore errors, fallback to default
-      }
-    })();
-  }, []);
+  const appName = config.aboutTitle ?? "About Parikrama";
+  const aboutText =
+    config.aboutBody ?? "Made by Prittam - www.sapphirepegasus.com";
 
   return (
     <ScrollView style={[styles.root, { backgroundColor: bg }]}>

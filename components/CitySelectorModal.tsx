@@ -1,16 +1,16 @@
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import React, { useMemo, useState } from "react";
 import {
-    FlatList,
-    Keyboard,
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableWithoutFeedback,
-    View,
+  FlatList,
+  Keyboard,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
@@ -38,9 +38,8 @@ export default function CitySelectorModal({
 
   const filteredCities = useMemo(() => {
     if (!search.trim()) return cities;
-    return cities.filter((c) =>
-      c.city.toLowerCase().includes(search.toLowerCase())
-    );
+    const q = search.toLowerCase();
+    return cities.filter((c) => c.city.toLowerCase().includes(q));
   }, [search, cities]);
 
   const sortedCities = useMemo(() => {
@@ -66,17 +65,20 @@ export default function CitySelectorModal({
         exiting={FadeOut.duration(400)}
         style={[styles.container, { backgroundColor: bg }]}
       >
-        {/* Header */}
         <View style={styles.headerRow}>
           <Text style={[styles.headerText, { color: text }]}>
             Select a City
           </Text>
-          <Pressable onPress={onClose} hitSlop={12}>
+          <Pressable
+            onPress={onClose}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
             <Ionicons name="close" size={24} color={text} />
           </Pressable>
         </View>
 
-        {/* Search Box */}
         <View style={[styles.searchBox, { borderColor: text }]}>
           <Ionicons
             name="search-outline"
@@ -95,7 +97,6 @@ export default function CitySelectorModal({
           />
         </View>
 
-        {/* Cities List */}
         <FlatList
           data={sortedCities}
           keyExtractor={(item) => item.id.toString()}
@@ -131,6 +132,11 @@ export default function CitySelectorModal({
               </Text>
             </Pressable>
           )}
+          ListEmptyComponent={
+            <Text style={{ color: text, opacity: 0.7, padding: 12 }}>
+              No cities match your search.
+            </Text>
+          }
         />
       </Animated.View>
     </Modal>
@@ -138,10 +144,7 @@ export default function CitySelectorModal({
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-  },
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)" },
   container: {
     position: "absolute",
     top: "15%",
@@ -161,35 +164,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  headerText: {
-    fontSize: 18,
-    fontWeight: "800",
-  },
+  headerText: { fontSize: 18, fontWeight: "800" },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
     paddingHorizontal: 8,
-    paddingVertical: 0,
     marginBottom: 16,
   },
-  input: {
-    flex: 1,
-    fontSize: 14,
-  },
-  item: {
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    //borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#ccc",
-  },
-  city: {
-    fontSize: 16,
-  },
-  meta: {
-    fontSize: 12,
-    opacity: 0.7,
-  },
+  input: { flex: 1, fontSize: 14 },
+  item: { paddingVertical: 12, paddingHorizontal: 10, borderRadius: 8 },
+  city: { fontSize: 16 },
+  meta: { fontSize: 12, opacity: 0.7 },
 });

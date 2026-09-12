@@ -1,13 +1,13 @@
-import SearchBar from "@/components/SearchBar"; // ✅ use the shared search bar
+import SearchBar from "@/components/SearchBar";
 import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { openInMaps } from "@/lib/maps";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
+import { useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
   FlatList,
   LayoutAnimation,
-  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -16,7 +16,6 @@ import {
   View,
 } from "react-native";
 
-// enable LayoutAnimation on Android
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental
@@ -32,11 +31,8 @@ interface Celebration {
   distanceFromMetro: string;
   description: string;
   city_id: number;
-  city_name: string;
   festival_id: number;
-  festival_name: string;
   area_id: number;
-  area_name: string;
 }
 
 export default function CelebrationsScreen() {
@@ -44,66 +40,49 @@ export default function CelebrationsScreen() {
     id: areaId,
     cityId,
     festivalId,
-  } = useLocalSearchParams<{
-    id: string;
-    cityId: string;
-    festivalId: string;
-  }>();
-  const router = useRouter();
+  } = useLocalSearchParams<{ id: string; cityId: string; festivalId: string }>();
+
   const bg = useThemeColor({}, "background");
   const text = useThemeColor({}, "text");
-  const btnCol = useThemeColor({}, "tint");
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  // fetch celebrations cached
   const { data: allCelebrations = [], loading } = useCachedQuery<Celebration>(
     `celebrations_cache_${areaId}`,
     "ParikramaCelebrations"
   );
 
-  // filter by area, city, festival and search
   const filteredCelebrations = useMemo(() => {
-    return (allCelebrations || [])
+    const q = searchQuery.toLowerCase();
+    return allCelebrations
       .filter((c) => String(c.area_id) === String(areaId))
       .filter((c) => String(c.city_id) === String(cityId))
       .filter((c) => String(c.festival_id) === String(festivalId))
       .filter(
         (c) =>
           !searchQuery ||
-          c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (c.address &&
-            c.address.toLowerCase().includes(searchQuery.toLowerCase()))
+          c.name.toLowerCase().includes(q) ||
+          c.address?.toLowerCase().includes(q)
       )
       .sort((a, b) => a.id - b.id);
   }, [allCelebrations, areaId, cityId, festivalId, searchQuery]);
 
-  // pick one for header
-  const headerFestival = filteredCelebrations[0]?.festival_name || "";
-  const headerArea = filteredCelebrations[0]?.area_name || "";
-
-  // group by metroStation
   const grouped = useMemo(() => {
     const groups: Record<string, Celebration[]> = {};
-    filteredCelebrations.forEach((c) => {
+    for (const c of filteredCelebrations) {
       const key = c.metroStation || "Others";
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(c);
-    });
+      (groups[key] ??= []).push(c);
+    }
     return groups;
   }, [filteredCelebrations]);
 
-  // collapse state
   const [collapsedStations, setCollapsedStations] = useState<
     Record<string, boolean>
   >({});
 
   const toggleCollapse = (station: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setCollapsedStations((prev) => ({
-      ...prev,
-      [station]: !prev[station],
-    }));
+    setCollapsedStations((prev) => ({ ...prev, [station]: !prev[station] }));
   };
 
   if (loading) {
@@ -116,12 +95,6 @@ export default function CelebrationsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
-      {/* Header 
-      <Text style={[styles.header, { color: text }]}>
-        {headerFestival ? `${headerFestival} in ${headerArea}` : "Celebrations"}
-      </Text>*/}
-
-      {/* SearchBar */}
       <SearchBar
         value={searchQuery}
         onChangeText={setSearchQuery}
@@ -144,6 +117,7 @@ export default function CelebrationsScreen() {
             <Pressable
               style={styles.groupHeader}
               onPress={() => toggleCollapse(station)}
+              accessibilityRole="button"
             >
               <Text style={[styles.groupTitle, { color: text }]}>
                 {station} ({grouped[station].length})
@@ -164,14 +138,9 @@ export default function CelebrationsScreen() {
                 <Pressable
                   key={c.id}
                   style={[styles.itemCard, { borderColor: text + "40" }]}
-                  onPress={() =>
-                    c.address &&
-                    Linking.openURL(
-                      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        c.name
-                      )}`
-                    )
-                  }
+                  onPress={() => c.address && openInMaps(c.name)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${c.name} in Maps`}
                 >
                   <View style={styles.itemContent}>
                     <View style={{ flex: 1 }}>
@@ -211,12 +180,6 @@ export default function CelebrationsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 40 },
   loader: { flex: 1, alignItems: "center", justifyContent: "center" },
-  header: {
-    fontSize: 18,
-    fontWeight: "800",
-    marginHorizontal: 16,
-    marginBottom: 8,
-  },
   group: { marginBottom: 8 },
   groupHeader: {
     flexDirection: "row",
@@ -225,12 +188,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   groupTitle: { fontSize: 18, fontWeight: "700" },
-  itemCard: {
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderRadius: 12,
-  },
+  itemCard: { padding: 12, marginBottom: 8, borderWidth: 1, borderRadius: 12 },
   itemContent: {
     flexDirection: "row",
     alignItems: "center",

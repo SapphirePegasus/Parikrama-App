@@ -1,18 +1,27 @@
-// app/menu/index.tsx
 import MenuItem from "@/components/MenuItem";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+
+// These could be moved into ParikramaConfig (remote config) later if you
+// want to change them without shipping an app update. Keeping them as
+// constants for now since that's a deliberate scope decision, not an
+// oversight.
+const ADD_FESTIVAL_FORM = "https://forms.gle/VX74tot19da2N8Vx9";
+const SUGGESTIONS_FORM = "https://forms.gle/aVbhsqnqoiWKgVbj8";
 
 export default function MenuIndex() {
   const router = useRouter();
   const bg = useThemeColor({}, "background");
   const text = useThemeColor({}, "text");
 
-  // Replace these with your real Google Form URLs later (can be pulled from ParikramaConfig)
-  const ADD_FESTIVAL_FORM = "https://forms.gle/VX74tot19da2N8Vx9";
-  const SUGGESTIONS_FORM = "https://forms.gle/aVbhsqnqoiWKgVbj8";
+  const openExternal = (url: string) => {
+    WebBrowser.openBrowserAsync(url).catch((err) =>
+      console.warn("[Menu] Failed to open external link:", err)
+    );
+  };
 
   return (
     <ScrollView style={[styles.root, { backgroundColor: bg }]}>
@@ -22,14 +31,14 @@ export default function MenuIndex() {
           icon="add-circle-outline"
           title="Add Festival"
           subtitle="Suggest a festival/celebration (Google Form)"
-          onPress={() => router.push({ pathname: ADD_FESTIVAL_FORM })}
+          onPress={() => openExternal(ADD_FESTIVAL_FORM)}
         />
 
         <MenuItem
           icon="chatbox-ellipses-outline"
           title="Feedback & Support"
-          subtitle="Send feedbacks & get support (Google Form)"
-          onPress={() => router.push({ pathname: SUGGESTIONS_FORM })}
+          subtitle="Send feedback & get support (Google Form)"
+          onPress={() => openExternal(SUGGESTIONS_FORM)}
         />
 
         <MenuItem
@@ -59,7 +68,7 @@ export default function MenuIndex() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, paddingTop: 40 },
-  container: { marginTop: 8, backgroundColor: "transparent" },
+  container: { marginTop: 8 },
   header: {
     fontSize: 18,
     fontWeight: "800",

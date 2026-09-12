@@ -1,45 +1,61 @@
+import { AppConfigProvider } from "@/context/AppConfigContext";
 import { SelectedCityProvider } from "@/context/SelectedCityContext";
+import { initSentry } from "@/lib/sentry";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
-} from "@react-navigation/native";
+} from "expo-router/react-navigation";
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
 
+initSentry();
+
+const ONBOARDING_STORAGE_KEY = "onboardingSeen_v1";
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const segments = useSegments();
 
-  const [loaded] = useFonts({
+  const [fontsLoaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
-  const [checking, setChecking] = useState(true);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     (async () => {
       try {
-        // one-time onboarding flag (local only)
-        const seen = await AsyncStorage.getItem("onboardingSeen_v1");
+        const seen = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
+        if (cancelled) return;
 
         if (!seen && segments[0] !== "onboarding") {
           router.replace("/onboarding");
         }
       } catch (err) {
-        console.warn("⚠️ Onboarding check failed", err);
+        console.warn("[RootLayout] Onboarding check failed:", err);
       } finally {
-        setChecking(false);
+        if (!cancelled) setCheckingOnboarding(false);
       }
     })();
-  }, [router, segments]);
 
-  if (!loaded || checking) {
+    return () => {
+      cancelled = true;
+    };
+    // Intentionally only re-checked on mount, not on every segment change —
+    // this is a one-time "have they ever seen onboarding" gate, not a
+    // route guard that should re-run on navigation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!fontsLoaded || checkingOnboarding) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator size="large" />
@@ -48,11 +64,13 @@ export default function RootLayout() {
   }
 
   return (
-    <SelectedCityProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }} />
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </SelectedCityProvider>
+    <AppConfigProvider>
+      <SelectedCityProvider>
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }} />
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </SelectedCityProvider>
+    </AppConfigProvider>
   );
 }

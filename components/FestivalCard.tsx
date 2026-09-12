@@ -1,4 +1,3 @@
-// components/FestivalCard.tsx
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { Image } from "expo-image";
 import React from "react";
@@ -12,7 +11,7 @@ export type Festival = {
   description?: string | null;
   when_to_go?: string | null;
   city_name?: string;
-  images?: string | null; // semicolon separated URLs
+  images?: string | null; // semicolon-separated URLs
 };
 
 type Props = {
@@ -20,21 +19,21 @@ type Props = {
   onPress?: () => void;
 };
 
+function getFirstImage(images?: string | null): string | undefined {
+  if (!images) return undefined;
+  const parts = images
+    .split(";")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return parts[0];
+}
+
 export default function FestivalCard({ item, onPress }: Props) {
-  const bg = useThemeColor({}, "background");
   const cardBg = useThemeColor({}, "tabIconDefault");
   const text = useThemeColor({}, "text");
   const accent = useThemeColor({}, "tint");
 
-  // get first image from semicolon separated list
-  let thumbnail: string | undefined;
-  if (item.images) {
-    const parts = item.images
-      .split(";")
-      .map((p) => p.trim())
-      .filter(Boolean);
-    if (parts.length) thumbnail = parts[0];
-  }
+  const thumbnail = getFirstImage(item.images);
 
   return (
     <Pressable
@@ -44,7 +43,7 @@ export default function FestivalCard({ item, onPress }: Props) {
       {thumbnail ? (
         <Image source={thumbnail} style={styles.image} contentFit="cover" />
       ) : (
-        <View style={[styles.imagePlaceholder]}>
+        <View style={styles.imagePlaceholder}>
           <Text>No Image</Text>
         </View>
       )}
@@ -75,19 +74,14 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     elevation: 2,
   },
-  image: {
-    width: "100%",
-    height: 180,
-  },
+  image: { width: "100%", height: 180 },
   imagePlaceholder: {
     width: "100%",
     height: 180,
     justifyContent: "center",
     alignItems: "center",
   },
-  body: {
-    padding: 12,
-  },
+  body: { padding: 12 },
   name: { fontSize: 18, fontWeight: "800", marginBottom: 4 },
   subtitle: { fontSize: 13, marginBottom: 8 },
   when: { fontSize: 12, fontWeight: "600" },

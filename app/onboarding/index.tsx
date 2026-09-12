@@ -1,4 +1,4 @@
-import { useAppConfig } from "@/hooks/useAppConfig";
+import { useAppConfig } from "@/context/AppConfigContext";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -15,6 +15,7 @@ import {
 import SlideDesign from "./slide-design";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const ONBOARDING_STORAGE_KEY = "onboardingSeen_v1";
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -23,9 +24,6 @@ export default function OnboardingScreen() {
   const textColor = useThemeColor({}, "text");
   const accent = useThemeColor({}, "tint");
   const accentText = useThemeColor({}, "tintText");
-
-  const version = config["onboarding_version"] ?? "1";
-  const STORAGE_KEY = `onboardingSeen_v${version}`;
 
   const slides = useMemo(() => {
     return [1, 2, 3, 4].map((n) => ({
@@ -46,15 +44,18 @@ export default function OnboardingScreen() {
   };
 
   const finish = async () => {
-    await AsyncStorage.setItem(STORAGE_KEY, "true");
+    try {
+      await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+    } catch (err) {
+      console.warn("[Onboarding] Failed to persist onboarding flag:", err);
+    }
     router.replace("/");
   };
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: bg }]}>
-      {/* Skip */}
       <View style={styles.topRow}>
-        <Pressable onPress={finish}>
+        <Pressable onPress={finish} accessibilityRole="button">
           <Text style={{ color: textColor, opacity: 0.8 }}>Skip</Text>
         </Pressable>
       </View>
@@ -85,7 +86,6 @@ export default function OnboardingScreen() {
         showsHorizontalScrollIndicator={false}
       />
 
-      {/* Dots */}
       <View style={styles.dotsRow}>
         {slides.map((_, i) => (
           <View
@@ -101,20 +101,13 @@ export default function OnboardingScreen() {
         ))}
       </View>
 
-      {/* Bottom buttons */}
       <View style={styles.bottomRow}>
         {index < slides.length - 1 ? (
           <Pressable
             onPress={goNext}
             style={[styles.cta, { backgroundColor: accent }]}
           >
-            <Text
-              style={{
-                color: accentText,
-                fontWeight: "800",
-                textAlign: "center",
-              }}
-            >
+            <Text style={{ color: accentText, fontWeight: "800", textAlign: "center" }}>
               Next
             </Text>
           </Pressable>
@@ -123,13 +116,7 @@ export default function OnboardingScreen() {
             onPress={finish}
             style={[styles.cta, { backgroundColor: accent }]}
           >
-            <Text
-              style={{
-                color: accentText,
-                fontWeight: "800",
-                textAlign: "center",
-              }}
-            >
+            <Text style={{ color: accentText, fontWeight: "800", textAlign: "center" }}>
               Get Started
             </Text>
           </Pressable>
@@ -141,30 +128,12 @@ export default function OnboardingScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, paddingVertical: 32 },
-  topRow: {
-    position: "absolute",
-    top: 42,
-    right: 24,
-    zIndex: 10,
-  },
-  dotsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 12,
-  },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
-  },
-  bottomRow: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 20,
-  },
+  topRow: { position: "absolute", top: 42, right: 24, zIndex: 10 },
+  dotsRow: { flexDirection: "row", justifyContent: "center", marginTop: 12 },
+  dot: { height: 8, borderRadius: 4, marginHorizontal: 4 },
+  bottomRow: { alignItems: "center", justifyContent: "center", marginVertical: 20 },
   cta: {
     width: 120,
-    textAlign: "center",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 100,

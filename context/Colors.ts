@@ -19,4 +19,6 @@ export const Colors = {
     tabIconDefault: "#252529ff",
     tabIconSelected: "#fff",
   },
-};
+} as const;
+
+export type ThemeColorName = keyof typeof Colors.light & keyof typeof Colors.dark;
